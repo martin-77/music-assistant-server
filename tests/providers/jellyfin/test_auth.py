@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 from typing import Any, cast
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import ANY, AsyncMock, MagicMock
 
 import pytest
 
@@ -64,7 +64,7 @@ async def test_saved_quick_connect_token_is_reused_and_validated(
         base_url="https://jellyfin.example",
         app_name="Music Assistant",
         app_version="test-version",
-        device_name=pytest.ANY,
+        device_name=ANY,
         device_id="device-id",
         user_id="user-id",
         access_token="access-token",
