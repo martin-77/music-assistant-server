@@ -113,7 +113,7 @@ async def test_quick_connect_flow_persists_token_and_device(
 
     assert initiated_device_id
     assert session.external == {
-        "url": "https://jellyfin.example",
+        "url": "https://jellyfin.example/web/#/quickconnect?code=123456",
         "step_id": "quick_connect",
         "expires_in": setup_flow.QUICK_CONNECT_TIMEOUT,
         "translation_params": ["123456"],
