@@ -95,7 +95,7 @@ async def test_iter_tracks_paginates_until_total_count(monkeypatch: pytest.Monke
             },
         ]
     )
-    monkeypatch.setattr(client, "_items_request", request)
+    monkeypatch.setattr(JellyfinClient, "_items_request", request)
 
     tracks = [track async for track in client.iter_tracks("library-id", ("Path",))]
 
@@ -131,7 +131,7 @@ async def test_get_playlist_tracks_requests_requested_page(monkeypatch: pytest.M
     """Playlist paging must preserve start index, limit, fields, and non-recursive semantics."""
     client = create_client()
     get_json = AsyncMock(return_value={"Items": [{"Id": "track-101"}]})
-    monkeypatch.setattr(client, "_get_json", get_json)
+    monkeypatch.setattr(JellyfinClient, "_get_json", get_json)
 
     tracks = await client.get_playlist_tracks(
         "playlist-id",
@@ -165,7 +165,7 @@ async def test_get_similar_tracks_requests_limit_and_fields(monkeypatch: pytest.
             ]
         }
     )
-    monkeypatch.setattr(client, "_get_json", get_json)
+    monkeypatch.setattr(JellyfinClient, "_get_json", get_json)
 
     tracks = await client.get_similar_tracks(
         "track-id",
