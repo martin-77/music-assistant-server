@@ -97,7 +97,7 @@ async def test_initiate_quick_connect_sends_device_authorization_header() -> Non
     assert len(session.post_calls) == 1
     request = session.post_calls[0]
     assert request["url"] == "https://jellyfin.example/QuickConnect/Initiate"
-    assert request["json"] == {}
+    assert "json" not in request
     assert request["ssl"] is True
     assert request["raise_for_status"] is True
     assert request["headers"]["Authorization"] == (
