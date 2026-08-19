@@ -114,9 +114,11 @@ async def test_quick_connect_flow_persists_token_and_device(
     assert session.progress == {
         "step_id": "quick_connect",
         "text": (
-            "**Quick Connect code: `123456`**\n\n"
-            "Open [Jellyfin Quick Connect](https://jellyfin.example/web/index.html#/quickconnect) "
-            "and enter this code. Music Assistant will continue automatically after approval."
+            "**Quick Connect code**\n\n"
+            "```text\n123456\n```\n\n"
+            "[Open Jellyfin Quick Connect with this code](https://jellyfin.example/web/"
+            "index.html#/quickconnect?code=123456) and approve Music Assistant. "
+            "The setup will continue automatically."
         ),
         "expires_in": setup_flow.QUICK_CONNECT_TIMEOUT,
     }
