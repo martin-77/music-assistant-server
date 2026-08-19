@@ -130,13 +130,12 @@ async def _quick_connect(session: SetupSession, setup_data: dict[str, Any]) -> N
     )
 
     request = await initiate_quick_connect(client)
-    quick_connect_url = f"{base_url}/web/#/quickconnect?code={request.code}"
-    auth = await session.external_until(
+    quick_connect_url = f"{base_url}/web/index.html#/quickconnect"
+    auth = await session.progress_until(
         wait_for_quick_connect(client, request.secret),
-        quick_connect_url,
         step_id="quick_connect",
         expires_in=QUICK_CONNECT_TIMEOUT,
-        translation_params=[request.code],
+        translation_params=[request.code, quick_connect_url],
     )
 
     setup_data[CONF_USERNAME] = auth.username
