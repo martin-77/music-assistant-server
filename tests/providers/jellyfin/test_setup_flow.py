@@ -46,7 +46,7 @@ class FakeSetupSession:
         )
         self.form_results = deque(form_results or [])
         self.forms: list[dict[str, Any]] = []
-        self.external: dict[str, Any] | None = None
+        self.progress: dict[str, Any] | None = None
         self.finished_values: dict[str, Any] | None = None
 
     async def form(self, entries: list[ConfigEntry], **kwargs: Any) -> dict[str, Any]:
@@ -54,14 +54,13 @@ class FakeSetupSession:
         self.forms.append({"entries": entries, **kwargs})
         return self.form_results.popleft()
 
-    async def external_until(
+    async def progress_until(
         self,
         awaitable: Awaitable[Any],
-        url: str,
         **kwargs: Any,
     ) -> Any:
-        """Capture an external step and await its completion."""
-        self.external = {"url": url, **kwargs}
+        """Capture a progress step and await its completion."""
+        self.progress = dict(kwargs)
         return await awaitable
 
     async def finish(self, values: dict[str, Any]) -> dict[str, str]:
@@ -112,11 +111,13 @@ async def test_quick_connect_flow_persists_token_and_device(
     await setup_flow.run_setup(session)  # type: ignore[arg-type]
 
     assert initiated_device_id
-    assert session.external == {
-        "url": "https://jellyfin.example/web/#/quickconnect?code=123456",
+    assert session.progress == {
         "step_id": "quick_connect",
         "expires_in": setup_flow.QUICK_CONNECT_TIMEOUT,
-        "translation_params": ["123456"],
+        "translation_params": [
+            "123456",
+            "https://jellyfin.example/web/index.html#/quickconnect",
+        ],
     }
     assert session.finished_values == {
         CONF_URL: "https://jellyfin.example/",
@@ -158,7 +159,7 @@ async def test_legacy_credentials_default_to_password_authentication() -> None:
         entry for entry in session.forms[0]["entries"] if entry.key == CONF_AUTH_METHOD
     )
     assert auth_entry.value == AUTH_PASSWORD
-    assert session.external is None
+    assert session.progress is None
     assert session.finished_values == {
         CONF_URL: "https://jellyfin.example",
         CONF_USERNAME: "legacy-user",
