@@ -5,10 +5,9 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Awaitable
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from music_assistant_models.config_entries import ConfigEntry
 
 from music_assistant.providers.jellyfin import (
     AUTH_PASSWORD,
@@ -24,6 +23,9 @@ from music_assistant.providers.jellyfin import (
 )
 from music_assistant.providers.jellyfin import setup_flow
 from music_assistant.providers.jellyfin.quick_connect import QuickConnectAuth, QuickConnectRequest
+
+if TYPE_CHECKING:
+    from music_assistant_models.config_entries import ConfigEntry
 
 
 class FakeSetupSession:
