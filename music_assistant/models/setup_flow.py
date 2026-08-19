@@ -297,6 +297,7 @@ class SetupSession:
         text: str | None = None,
         image: str | None = None,
         expires_in: float | None = None,
+        translation_params: list[str] | None = None,
     ) -> _T:
         """
         Publish a progress step and wait for the given awaitable, deadline-enforced.
@@ -312,9 +313,15 @@ class SetupSession:
         :param text: Optional progress text (slug, resolved from the translations).
         :param image: Optional data-URI illustration (e.g. a pairing QR code).
         :param expires_in: Optional deadline in seconds.
+        :param translation_params: Optional values for placeholders in the step translations.
         """
         step = self._build_step(
-            FlowStepType.PROGRESS, step_id, progress_text=text, image=image, expires_in=expires_in
+            FlowStepType.PROGRESS,
+            step_id,
+            progress_text=text,
+            image=image,
+            expires_in=expires_in,
+            translation_params=translation_params,
         )
         self._publish_step(step)
         return await self._await_with_deadline(awaitable, expires_in)
