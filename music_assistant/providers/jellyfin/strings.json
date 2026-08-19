@@ -35,7 +35,7 @@
     },
     "quick_connect": {
       "title": "Approve Music Assistant in Jellyfin",
-      "description": "Your Quick Connect code is **{0}**.\n\nOpen Jellyfin using the button below, sign in if needed, then go to **Settings → Quick Connect** and enter this code. This screen continues automatically after approval."
+      "description": "Your Quick Connect code is **{0}**.\n\nOpen **{1}** in Jellyfin and enter this code. Music Assistant will continue automatically after you approve it."
     }
   },
   "errors": {
