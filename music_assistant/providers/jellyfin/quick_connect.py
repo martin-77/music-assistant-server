@@ -32,7 +32,6 @@ async def initiate_quick_connect(client: JellyfinClient) -> QuickConnectRequest:
     """Create a Quick Connect request on the Jellyfin server."""
     async with client.session.post(
         f"{client.base_url}/QuickConnect/Initiate",
-        json={},
         headers=client.headers,
         ssl=client.verify_ssl,
         raise_for_status=True,
