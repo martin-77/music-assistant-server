@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import logging
 from logging import Logger
-from typing import TYPE_CHECKING
+from typing import Any, Protocol
 
-from aiojellyfin import ImageType as JellyImageType
 from music_assistant_models.enums import ContentType, ExternalID, ImageType, MediaType
 from music_assistant_models.errors import InvalidDataError
 from music_assistant_models.media_items import (
@@ -57,17 +56,24 @@ from .const import (
     USER_DATA_KEY_IS_FAVORITE,
 )
 
-if TYPE_CHECKING:
-    from aiojellyfin import Album as JellyAlbum
-    from aiojellyfin import Artist as JellyArtist
-    from aiojellyfin import Connection
-    from aiojellyfin import MediaItem as JellyMediaItem
-    from aiojellyfin import Playlist as JellyPlaylist
-    from aiojellyfin import Track as JellyTrack
+type JellyfinItem = dict[str, Any]
+
+
+class ArtworkProvider(Protocol):
+    """Interface required by Jellyfin metadata parsers."""
+
+    def artwork(
+        self,
+        item_id: str,
+        image_type: str,
+        *,
+        index: int | None = None,
+    ) -> str:
+        """Return an artwork path."""
 
 
 def parse_album(
-    logger: Logger, instance_id: str, connection: Connection, jellyfin_album: JellyAlbum
+    logger: Logger, instance_id: str, connection: ArtworkProvider, jellyfin_album: JellyfinItem
 ) -> Album:
     """Parse a Jellyfin Album response to an Album model object."""
     album_id = jellyfin_album[ITEM_KEY_ID]
@@ -145,7 +151,7 @@ def parse_album(
 
 
 def parse_artist(
-    logger: Logger, instance_id: str, connection: Connection, jellyfin_artist: JellyArtist
+    logger: Logger, instance_id: str, connection: ArtworkProvider, jellyfin_artist: JellyfinItem
 ) -> Artist:
     """Parse a Jellyfin Artist response to Artist model object."""
     artist_id = jellyfin_artist[ITEM_KEY_ID]
@@ -180,7 +186,7 @@ def parse_artist(
     return artist
 
 
-def audio_format(track: JellyTrack) -> AudioFormat:
+def audio_format(track: JellyfinItem) -> AudioFormat:
     """Build an AudioFormat model from a Jellyfin track."""
     streams = track.get(ITEM_KEY_MEDIA_STREAMS, [])
     audio_stream = next((s for s in streams if s.get(ITEM_KEY_MEDIA_STREAM_TYPE) == "Audio"), None)
@@ -205,7 +211,7 @@ def audio_format(track: JellyTrack) -> AudioFormat:
 
 
 def parse_track(
-    logger: Logger, instance_id: str, client: Connection, jellyfin_track: JellyTrack
+    logger: Logger, instance_id: str, client: ArtworkProvider, jellyfin_track: JellyfinItem
 ) -> Track:
     """Parse a Jellyfin Track response to a Track model object."""
     available = jellyfin_track[ITEM_KEY_CAN_DOWNLOAD]
@@ -222,7 +228,6 @@ def parse_track(
                 provider_instance=instance_id,
                 available=available,
                 audio_format=audio_format(jellyfin_track),
-                url=client.audio_url(jellyfin_track[ITEM_KEY_ID]),
             )
         },
     )
@@ -278,7 +283,7 @@ def parse_track(
 
 
 def parse_playlist(
-    instance_id: str, client: Connection, jellyfin_playlist: JellyPlaylist
+    instance_id: str, client: ArtworkProvider, jellyfin_playlist: JellyfinItem
 ) -> Playlist:
     """Parse a Jellyfin Playlist response to a Playlist object."""
     playlistid = jellyfin_playlist[ITEM_KEY_ID]
@@ -313,7 +318,7 @@ def _unknown_artist_mapping(instance_id: str) -> ItemMapping:
 
 
 def _get_artwork(
-    instance_id: str, client: Connection, media_item: JellyMediaItem
+    instance_id: str, client: ArtworkProvider, media_item: JellyfinItem
 ) -> UniqueList[MediaItemImage]:
     images: UniqueList[MediaItemImage] = UniqueList()
 
@@ -321,7 +326,7 @@ def _get_artwork(
         images.append(
             MediaItemImage(
                 type=ImageType.FANART,
-                path=client.artwork(media_item[ITEM_KEY_ID], JellyImageType.Backdrop, index=i),
+                path=client.artwork(media_item[ITEM_KEY_ID], "Backdrop", index=i),
                 provider=instance_id,
                 remotely_accessible=False,
             )

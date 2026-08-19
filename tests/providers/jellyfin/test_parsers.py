@@ -1,16 +1,13 @@
 """Test we can parse Jellyfin models into Music Assistant models."""
 
+from __future__ import annotations
+
+import json
 import logging
 import pathlib
-from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any
 
-import aiofiles
-import aiohttp
 import pytest
-from aiojellyfin import Artist, Connection
-from aiojellyfin.session import SessionConfiguration
-from mashumaro.codecs.json import JSONDecoder
 from music_assistant_models.enums import ContentType
 
 from music_assistant.providers.jellyfin.const import (
@@ -36,81 +33,90 @@ ARTIST_FIXTURES = list(FIXTURES_DIR.glob("artists/*.json"))
 ALBUM_FIXTURES = list(FIXTURES_DIR.glob("albums/*.json"))
 TRACK_FIXTURES = list(FIXTURES_DIR.glob("tracks/*.json"))
 
-ARTIST_DECODER = JSONDecoder(Artist)
-
 _LOGGER = logging.getLogger(__name__)
 
 
+class FakeJellyfinClient:
+    """Minimal Jellyfin client used by parser tests."""
+
+    def artwork(
+        self,
+        item_id: str,
+        image_type: str,
+        *,
+        index: int | None = None,
+    ) -> str:
+        """Return a deterministic artwork path."""
+        suffix = "" if index is None else f"/{index}"
+        return f"jellyfin://image/{item_id}/{image_type}{suffix}"
+
+
 @pytest.fixture
-async def connection() -> AsyncGenerator[Connection]:
-    """Spin up a dummy connection."""
-    async with aiohttp.ClientSession() as session:
-        session_config = SessionConfiguration(
-            session=session,
-            url="http://localhost:1234",
-            app_name="X",
-            app_version="0.0.0",
-            device_id="X",
-            device_name="localhost",
-        )
-        yield Connection(session_config, "USER_ID", "ACCESS_TOKEN")
+def client() -> FakeJellyfinClient:
+    """Return a fake Jellyfin client."""
+    return FakeJellyfinClient()
+
+
+def load_fixture(path: pathlib.Path) -> dict[str, Any]:
+    """Load a Jellyfin JSON fixture."""
+    with path.open(encoding="utf-8") as file:
+        data: dict[str, Any] = json.load(file)
+    return data
 
 
 @pytest.mark.parametrize("example", ARTIST_FIXTURES, ids=lambda val: str(val.stem))
-async def test_parse_artists(
-    example: pathlib.Path, connection: Connection, snapshot: SnapshotAssertion
+def test_parse_artists(
+    example: pathlib.Path,
+    client: FakeJellyfinClient,
+    snapshot: SnapshotAssertion,
 ) -> None:
     """Test we can parse artists."""
-    async with aiofiles.open(example, encoding="utf-8") as fp:
-        raw_data = ARTIST_DECODER.decode(await fp.read())
-    parsed = parse_artist(_LOGGER, "xx-instance-id-xx", connection, raw_data).to_dict()
-    # sort external Ids to ensure they are always in the same order for snapshot testing
+    raw_data = load_fixture(example)
+    parsed = parse_artist(_LOGGER, "xx-instance-id-xx", client, raw_data).to_dict()
     parsed["external_ids"].sort()
     assert snapshot == parsed
 
 
 @pytest.mark.parametrize("example", ALBUM_FIXTURES, ids=lambda val: str(val.stem))
-async def test_parse_albums(
-    example: pathlib.Path, connection: Connection, snapshot: SnapshotAssertion
+def test_parse_albums(
+    example: pathlib.Path,
+    client: FakeJellyfinClient,
+    snapshot: SnapshotAssertion,
 ) -> None:
     """Test we can parse albums."""
-    async with aiofiles.open(example, encoding="utf-8") as fp:
-        raw_data = ARTIST_DECODER.decode(await fp.read())
-    parsed = parse_album(_LOGGER, "xx-instance-id-xx", connection, raw_data).to_dict()
-    # sort external Ids to ensure they are always in the same order for snapshot testing
+    raw_data = load_fixture(example)
+    parsed = parse_album(_LOGGER, "xx-instance-id-xx", client, raw_data).to_dict()
     parsed["external_ids"].sort()
     assert snapshot == parsed
 
 
 @pytest.mark.parametrize("example", TRACK_FIXTURES, ids=lambda val: str(val.stem))
-async def test_parse_tracks(
-    example: pathlib.Path, connection: Connection, snapshot: SnapshotAssertion
+def test_parse_tracks(
+    example: pathlib.Path,
+    client: FakeJellyfinClient,
+    snapshot: SnapshotAssertion,
 ) -> None:
     """Test we can parse tracks."""
-    async with aiofiles.open(example, encoding="utf-8") as fp:
-        raw_data = ARTIST_DECODER.decode(await fp.read())
-    parsed = parse_track(_LOGGER, "xx-instance-id-xx", connection, raw_data).to_dict()
-    # sort external Ids to ensure they are always in the same order for snapshot testing
-    parsed["external_ids"]
+    raw_data = load_fixture(example)
+    parsed = parse_track(_LOGGER, "xx-instance-id-xx", client, raw_data).to_dict()
+    parsed["external_ids"].sort()
     assert snapshot == parsed
 
 
 def test_audio_format_empty_mediastreams() -> None:
     """Test audio_format handles empty MediaStreams array."""
-    # Track with empty MediaStreams
     track: dict[str, Any] = {
         ITEM_KEY_MEDIA_STREAMS: [],
     }
-    result = audio_format(track)  # type: ignore[arg-type]
 
-    # Verify no exception is raised and result has expected attributes
+    result = audio_format(track)
+
     assert result is not None
     assert hasattr(result, "content_type")
 
 
 def test_audio_format_missing_channels() -> None:
     """Test audio_format applies default when Channels field is missing."""
-    # Track with MediaStreams but missing Channels
     track: dict[str, Any] = {
         ITEM_KEY_MEDIA_SOURCES: [{ITEM_KEY_CONTAINER: "mp3"}],
         ITEM_KEY_MEDIA_STREAMS: [
@@ -123,26 +129,25 @@ def test_audio_format_missing_channels() -> None:
             }
         ],
     }
-    result = audio_format(track)  # type: ignore[arg-type]
 
-    # Verify defaults are applied correctly
+    result = audio_format(track)
+
     assert result is not None
-    assert result.channels == 2  # Default stereo
+    assert result.channels == 2
     assert result.sample_rate == 48000
     assert result.bit_depth == 16
-    assert result.bit_rate == 320  # AudioFormat converts bps to kbps automatically
+    assert result.bit_rate == 320
 
 
 def test_audio_format_wav_container_not_treated_as_raw_pcm() -> None:
-    """A WAV/PCM source must report the container so ffmpeg does not read it as raw PCM."""
-    # content_type must be the container (wav), not the codec (pcm_s24le): a PCM content_type
-    # makes the ffmpeg pipeline read the stream as headerless raw PCM, so the WAV header and
-    # embedded cover art get decoded as samples -> white noise. The embedded cover art is also
-    # why the audio stream is not first: the parser must pick the stream by Type, not index 0.
+    """A WAV/PCM source must report the container rather than raw PCM."""
     track: dict[str, Any] = {
         ITEM_KEY_MEDIA_SOURCES: [{ITEM_KEY_CONTAINER: "wav"}],
         ITEM_KEY_MEDIA_STREAMS: [
-            {ITEM_KEY_MEDIA_STREAM_TYPE: "Video", ITEM_KEY_MEDIA_CODEC: "mjpeg"},
+            {
+                ITEM_KEY_MEDIA_STREAM_TYPE: "Video",
+                ITEM_KEY_MEDIA_CODEC: "mjpeg",
+            },
             {
                 ITEM_KEY_MEDIA_STREAM_TYPE: "Audio",
                 ITEM_KEY_MEDIA_CODEC: "pcm_s24le",
@@ -152,7 +157,8 @@ def test_audio_format_wav_container_not_treated_as_raw_pcm() -> None:
             },
         ],
     }
-    result = audio_format(track)  # type: ignore[arg-type]
+
+    result = audio_format(track)
 
     assert result.content_type == ContentType.WAV
     assert not result.content_type.is_pcm()

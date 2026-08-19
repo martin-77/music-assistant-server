@@ -47,7 +47,7 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/70b7288088b42d318f75dbcc41fd0091/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/70b7288088b42d318f75dbcc41fd0091/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -147,7 +147,7 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -247,7 +247,7 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/32ed6a0091733dcff57eae67010f3d4b/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/32ed6a0091733dcff57eae67010f3d4b/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -410,21 +410,21 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/dd954bbf54398e247d803186d3585b79/Images/Backdrop/0?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/dd954bbf54398e247d803186d3585b79/Backdrop/0',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
           'type': 'fanart',
         }),
         dict({
-          'path': 'http://localhost:1234/Items/dd954bbf54398e247d803186d3585b79/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/dd954bbf54398e247d803186d3585b79/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
           'type': 'thumb',
         }),
         dict({
-          'path': 'http://localhost:1234/Items/dd954bbf54398e247d803186d3585b79/Images/Logo?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/dd954bbf54398e247d803186d3585b79/Logo',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -534,7 +534,7 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/da9c458e425584680765ddc3a89cbc0c/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/da9c458e425584680765ddc3a89cbc0c/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -577,7 +577,7 @@
         'item_id': 'da9c458e425584680765ddc3a89cbc0c',
         'provider_domain': 'jellyfin',
         'provider_instance': 'xx-instance-id-xx',
-        'url': 'http://localhost:1234/Audio/da9c458e425584680765ddc3a89cbc0c/universal?userId=USER_ID&deviceId=X&maxStreamingBitrate=140000000&api_key=ACCESS_TOKEN',
+        'url': None,
       }),
     ]),
     'sort_name': 'do i wanna know?',
@@ -681,7 +681,7 @@
         'item_id': 'b5319fb11cde39fca2023184fcfa9862',
         'provider_domain': 'jellyfin',
         'provider_instance': 'xx-instance-id-xx',
-        'url': 'http://localhost:1234/Audio/b5319fb11cde39fca2023184fcfa9862/universal?userId=USER_ID&deviceId=X&maxStreamingBitrate=140000000&api_key=ACCESS_TOKEN',
+        'url': None,
       }),
     ]),
     'sort_name': '11 thrown away',
@@ -734,7 +734,7 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/54918f75ee8f6c8b8dc5efd680644f29/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/54918f75ee8f6c8b8dc5efd680644f29/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -777,7 +777,7 @@
         'item_id': '54918f75ee8f6c8b8dc5efd680644f29',
         'provider_domain': 'jellyfin',
         'provider_instance': 'xx-instance-id-xx',
-        'url': 'http://localhost:1234/Audio/54918f75ee8f6c8b8dc5efd680644f29/universal?userId=USER_ID&deviceId=X&maxStreamingBitrate=140000000&api_key=ACCESS_TOKEN',
+        'url': None,
       }),
     ]),
     'sort_name': 'where the bands are',
@@ -865,7 +865,7 @@
       'grouping': None,
       'images': list([
         dict({
-          'path': 'http://localhost:1234/Items/fb12a77f49616a9fc56a6fab2b94174c/Images/Primary?api_key=ACCESS_TOKEN',
+          'path': 'jellyfin://image/fb12a77f49616a9fc56a6fab2b94174c/Primary',
           'provider': 'xx-instance-id-xx',
           'proxy_id': None,
           'remotely_accessible': False,
@@ -908,7 +908,7 @@
         'item_id': 'fb12a77f49616a9fc56a6fab2b94174c',
         'provider_domain': 'jellyfin',
         'provider_instance': 'xx-instance-id-xx',
-        'url': 'http://localhost:1234/Audio/fb12a77f49616a9fc56a6fab2b94174c/universal?userId=USER_ID&deviceId=X&maxStreamingBitrate=140000000&api_key=ACCESS_TOKEN',
+        'url': None,
       }),
     ]),
     'sort_name': 'zombie christmas',

@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from music_assistant.providers.jellyfin.client import JellyfinSession
+from music_assistant.providers.jellyfin.client import JellyfinClient
 
 
 class FakeContent:
@@ -64,25 +64,21 @@ async def test_stream_audio_uses_authorization_header() -> None:
     """Audio streaming must authenticate by header, never by query-string token."""
     http_session = FakeHttpSession()
 
-    config = MagicMock()
-    config.url = "http://jellyfin.example/"
-    config.session = http_session
-    config.verify_ssl = True
-    config.device_id = "device-id"
-    config.user_agent = "Music Assistant/test"
-    config.authentication_header.return_value = (
-        'MediaBrowser Client="Music Assistant", Token="secret-token"'
-    )
-
-    session = JellyfinSession(
-        config=config,
+    client = JellyfinClient(
+        session=http_session,  # type: ignore[arg-type]
+        base_url="http://jellyfin.example",
+        app_name="Music Assistant",
+        app_version="test",
+        device_name="test-device",
+        device_id="device-id",
         user_id="user-id",
         access_token="secret-token",
+        verify_ssl=True,
     )
 
     chunks = [
         chunk
-        async for chunk in session.stream_audio(
+        async for chunk in client.stream_audio(
             "track-id",
             container="flac,mp3",
             seek_position=42,
@@ -103,7 +99,61 @@ async def test_stream_audio_uses_authorization_header() -> None:
 
     headers = http_session.request["headers"]
     assert headers["Authorization"] == (
-        'MediaBrowser Client="Music Assistant", Token="secret-token"'
+        'MediaBrowser Client="Music Assistant", Device="test-device", '
+        'DeviceId="device-id", Version="test", Token="secret-token"'
     )
 
-    config.authentication_header.assert_called_once_with("secret-token")
+
+def test_parse_current_image_path() -> None:
+    """Current opaque artwork paths are parsed correctly."""
+    client = JellyfinClient(
+        session=MagicMock(),
+        base_url="https://music.example",
+        app_name="Music Assistant",
+        app_version="test",
+        device_name="test-device",
+        device_id="device-id",
+        user_id="user-id",
+        access_token="secret-token",
+    )
+
+    assert client._parse_image_path("jellyfin://image/item-id/Backdrop/0") == (
+        "item-id",
+        "Backdrop",
+        "0",
+    )
+
+
+def test_parse_legacy_image_url_discards_api_key() -> None:
+    """Legacy artwork URLs are accepted without reusing their query token."""
+    client = JellyfinClient(
+        session=MagicMock(),
+        base_url="https://music.example",
+        app_name="Music Assistant",
+        app_version="test",
+        device_name="test-device",
+        device_id="device-id",
+        user_id="user-id",
+        access_token="new-token",
+    )
+
+    assert client._parse_image_path(
+        "https://music.example/Items/item-id/Images/Primary?api_key=old-secret"
+    ) == ("item-id", "Primary", None)
+
+
+def test_reject_legacy_image_url_from_other_host() -> None:
+    """Legacy artwork URLs from other servers must not be accepted."""
+    client = JellyfinClient(
+        session=MagicMock(),
+        base_url="https://music.example",
+        app_name="Music Assistant",
+        app_version="test",
+        device_name="test-device",
+        device_id="device-id",
+        user_id="user-id",
+        access_token="secret-token",
+    )
+
+    with pytest.raises(FileNotFoundError):
+        client._parse_image_path("https://attacker.example/Items/item-id/Images/Primary")

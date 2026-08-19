@@ -4,9 +4,10 @@
   "stage": "unmaintained",
   "name": "Jellyfin Media Server Library",
   "description": "Stream music from your self-hosted Jellyfin server.",
-  "codeowners": ["@lokiberra", "@Jc2k"],
-  "credits": ["[aiojellyfin](https://github.com/Jc2k/aiojellyfin)"],
-  "requirements": ["aiojellyfin==0.14.1"],
+  "codeowners": [
+    "@lokiberra",
+    "@Jc2k"
+  ],
   "documentation": "https://music-assistant.io/music-providers/jellyfin/",
   "multi_instance": true
 }
