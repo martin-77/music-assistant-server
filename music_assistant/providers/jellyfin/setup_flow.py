@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import socket
 from dataclasses import replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from aiohttp import ClientError
@@ -61,7 +61,7 @@ _PASSWORD_ENTRIES = (
 )
 
 
-def _prefill(entries: tuple[ConfigEntry, ...], setup_data: dict[str, object]) -> list[ConfigEntry]:
+def _prefill(entries: tuple[ConfigEntry, ...], setup_data: dict[str, Any]) -> list[ConfigEntry]:
     """Return setup entries prefilled from existing setup data."""
     return [replace(entry, value=setup_data.get(entry.key, entry.value)) for entry in entries]
 
@@ -110,7 +110,7 @@ async def run_setup(session: SetupSession) -> None:
             errors = {"base": err.translation_key or str(err)}
 
 
-async def _quick_connect(session: SetupSession, setup_data: dict[str, object]) -> None:
+async def _quick_connect(session: SetupSession, setup_data: dict[str, Any]) -> None:
     """Run Jellyfin Quick Connect and update setup data with the resulting token."""
     base_url = str(setup_data[CONF_URL]).rstrip("/")
     verify_ssl = bool(setup_data.get(CONF_VERIFY_SSL, True))
