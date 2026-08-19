@@ -33,7 +33,7 @@ from music_assistant.providers.jellyfin.parsers import (
     parse_track,
 )
 
-from .client import NotFound, authenticate
+from .client import JellyfinClient, NotFound, authenticate
 from .const import (
     ALBUM_FIELDS,
     ARTIST_FIELDS,
@@ -59,6 +59,12 @@ CONF_URL = "url"
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_VERIFY_SSL = "verify_ssl"
+CONF_AUTH_METHOD = "auth_method"
+CONF_ACCESS_TOKEN = "access_token"
+CONF_USER_ID = "user_id"
+CONF_DEVICE_ID = "device_id"
+AUTH_QUICK_CONNECT = "quick_connect"
+AUTH_PASSWORD = "password"
 SUPPORTED_FEATURES = {
     ProviderFeature.LIBRARY_ARTISTS,
     ProviderFeature.LIBRARY_ALBUMS,
@@ -87,30 +93,40 @@ class JellyfinProvider(MusicProvider):
 
     async def handle_async_init(self) -> None:
         """Initialize provider(instance) with given configuration."""
-        username = str(self.get_setup_value(CONF_USERNAME))
-
-        # Device ID should be stable between reboots
-        # Otherwise every time the provider starts we "leak" a new device
-        # entry in the Jellyfin backend, which creates devices and entities
-        # in HA if they also use the Jellyfin integration there.
-
-        # We follow a suggestion a Jellyfin dev gave to HA and use an ID
-        # that is stable even if provider is removed and re-added.
-        # They said mix in username in case the same device/app has 2
-        # connections to the same servers
-
-        # Neither of these are secrets (username is handed over to mint a
-        # token and server_id is used in zeroconf) but hash them anyway as its meant
-        # to be an opaque identifier
-
-        device_id = hashlib.sha256(f"{self.mass.server_id}+{username}".encode()).hexdigest()
+        username = str(self.get_setup_value(CONF_USERNAME) or "")
         verify_ssl = bool(self.get_setup_value(CONF_VERIFY_SSL))
         http_session = self.mass.http_session if verify_ssl else self.mass.http_session_no_ssl
+        url = str(self.get_setup_value(CONF_URL)).rstrip("/")
 
         try:
+            access_token = self.get_setup_value(CONF_ACCESS_TOKEN)
+            user_id = self.get_setup_value(CONF_USER_ID)
+            saved_device_id = self.get_setup_value(CONF_DEVICE_ID)
+
+            if access_token and user_id and saved_device_id:
+                self._client = JellyfinClient(
+                    session=http_session,
+                    base_url=url,
+                    app_name=USER_APP_NAME,
+                    app_version=self.mass.version,
+                    device_name=socket.gethostname(),
+                    device_id=str(saved_device_id),
+                    user_id=str(user_id),
+                    access_token=str(access_token),
+                    verify_ssl=verify_ssl,
+                )
+                # Quick Connect tokens are persistent until revoked. Validate the saved
+                # token during provider startup so a revoked session surfaces as LoginFailed.
+                await self._client.get_media_folders()
+                return
+
+            # Legacy/password configurations continue to authenticate on startup. Keep
+            # their deterministic device id so existing installations do not accumulate
+            # a new Jellyfin device on every restart or re-add.
+            device_id = hashlib.sha256(f"{self.mass.server_id}+{username}".encode()).hexdigest()
             self._client = await authenticate(
                 session=http_session,
-                url=str(self.get_setup_value(CONF_URL)),
+                url=url,
                 username=username,
                 password=str(self.get_setup_value(CONF_PASSWORD) or ""),
                 app_name=USER_APP_NAME,
