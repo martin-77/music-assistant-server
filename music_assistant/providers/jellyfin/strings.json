@@ -4,6 +4,13 @@
       "label": "Server",
       "description": "The url of the Jellyfin server to connect to."
     },
+    "auth_method": {
+      "label": "Authentication method",
+      "options": {
+        "quick_connect": "Quick Connect (recommended)",
+        "password": "Username and password"
+      }
+    },
     "username": {
       "label": "[%key:common::config_entries::username::label%]",
       "description": "The username to authenticate to the remote server. For example 'media'."
@@ -16,6 +23,24 @@
       "label": "[%key:common::config_entries::verify_ssl::label%]",
       "description": "[%key:common::config_entries::verify_ssl::description%]"
     }
+  },
+  "setup_flow": {
+    "user": {
+      "title": "Connect to Jellyfin",
+      "description": "Enter your Jellyfin server address and choose how Music Assistant should authenticate. Quick Connect avoids storing your Jellyfin password and is recommended when the server supports it."
+    },
+    "password": {
+      "title": "Sign in to Jellyfin",
+      "description": "Enter the Jellyfin username and password Music Assistant should use."
+    },
+    "quick_connect": {
+      "title": "Approve Music Assistant in Jellyfin",
+      "description": "Your Quick Connect code is **{0}**.\n\nOpen Jellyfin using the button below, sign in if needed, then go to **Settings → Quick Connect** and enter this code. This screen continues automatically after approval."
+    }
+  },
+  "errors": {
+    "quick_connect_expired": "The Quick Connect request expired before it was approved. Please try again.",
+    "quick_connect_failed": "Quick Connect could not be completed. Check that Quick Connect is enabled on the Jellyfin server, then try again or use username and password."
   },
   "manifest": {
     "description": "Stream music from your self-hosted Jellyfin server."
