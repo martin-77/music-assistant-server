@@ -131,11 +131,16 @@ async def _quick_connect(session: SetupSession, setup_data: dict[str, Any]) -> N
 
     request = await initiate_quick_connect(client)
     quick_connect_url = f"{base_url}/web/index.html#/quickconnect"
+    progress_text = (
+        f"**Quick Connect code: `{request.code}`**\n\n"
+        f"Open [Jellyfin Quick Connect]({quick_connect_url}) and enter this code. "
+        "Music Assistant will continue automatically after approval."
+    )
     auth = await session.progress_until(
         wait_for_quick_connect(client, request.secret),
         step_id="quick_connect",
+        text=progress_text,
         expires_in=QUICK_CONNECT_TIMEOUT,
-        translation_params=[request.code, quick_connect_url],
     )
 
     setup_data[CONF_USERNAME] = auth.username
