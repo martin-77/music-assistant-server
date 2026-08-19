@@ -50,9 +50,11 @@ from .const import (
     TRACK_FIELDS,
     USER_APP_NAME,
 )
+from .playstate import mark_played
 
 if TYPE_CHECKING:
     from music_assistant_models.config_entries import ConfigEntry, ProviderConfig
+    from music_assistant_models.media_items import MediaItemType
     from music_assistant_models.provider import ProviderManifest
 
 CONF_URL = "url"
@@ -351,6 +353,20 @@ class JellyfinProvider(MusicProvider):
             seek_position=seek_position,
         ):
             yield chunk
+
+    async def on_played(
+        self,
+        media_type: MediaType,
+        prov_item_id: str,
+        fully_played: bool,
+        position: int,
+        media_item: MediaItemType,
+        is_playing: bool = False,
+    ) -> None:
+        """Sync completed track plays to Jellyfin user data."""
+        if media_type != MediaType.TRACK or not fully_played or is_playing:
+            return
+        await mark_played(self._client, prov_item_id)
 
     @use_cache(3600)  # Cache for 1 hour
     async def get_similar_tracks(self, prov_track_id: str, limit: int = 25) -> list[Track]:
