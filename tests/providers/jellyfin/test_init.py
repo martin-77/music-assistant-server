@@ -1,7 +1,7 @@
 """Tests for the Jellyfin provider."""
 
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest import mock
 
 import pytest
@@ -29,9 +29,15 @@ async def jellyfin_provider(mass: MusicAssistant) -> AsyncGenerator[ProviderConf
 
     authenticate_by_name = f.to_authenticate_by_name()
 
-    with mock.patch(
-        "music_assistant.providers.jellyfin.authenticate_by_name", authenticate_by_name
-    ):
+    async def authenticate(
+        session_config: Any,
+        username: str,
+        password: str,
+    ) -> tuple[Any, mock.MagicMock]:
+        client = await authenticate_by_name(session_config, username, password)
+        return client, mock.MagicMock()
+
+    with mock.patch("music_assistant.providers.jellyfin.authenticate", authenticate):
         async with wait_for_sync_completion(mass):
             config = await mass.config._create_provider_instance(
                 "jellyfin",
