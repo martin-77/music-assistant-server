@@ -21,9 +21,11 @@ class JsonResponse:
     """Minimal async response returning a JSON payload."""
 
     def __init__(self, payload: dict[str, Any]) -> None:
+        """Initialize the response payload."""
         self.payload = payload
 
     async def __aenter__(self) -> Self:
+        """Enter the async response context."""
         return self
 
     async def __aexit__(
@@ -32,9 +34,11 @@ class JsonResponse:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
+        """Exit the async response context."""
         return
 
     async def json(self) -> dict[str, Any]:
+        """Return the configured JSON payload."""
         return self.payload
 
 
@@ -47,16 +51,19 @@ class QuickConnectSession:
         get_payloads: list[dict[str, Any]] | None = None,
         post_payloads: list[dict[str, Any]] | None = None,
     ) -> None:
+        """Initialize queued responses and request capture."""
         self.get_payloads = deque(get_payloads or [])
         self.post_payloads = deque(post_payloads or [])
         self.get_calls: list[dict[str, Any]] = []
         self.post_calls: list[dict[str, Any]] = []
 
     def get(self, url: str, **kwargs: Any) -> JsonResponse:
+        """Capture a GET request and return the next queued response."""
         self.get_calls.append({"url": url, **kwargs})
         return JsonResponse(self.get_payloads.popleft())
 
     def post(self, url: str, **kwargs: Any) -> JsonResponse:
+        """Capture a POST request and return the next queued response."""
         self.post_calls.append({"url": url, **kwargs})
         return JsonResponse(self.post_payloads.popleft())
 
